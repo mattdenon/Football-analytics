@@ -607,6 +607,69 @@
             margin-right: 5px;
             font-size: 1.2rem;
         }
+
+        .opportunities-section {
+            background: linear-gradient(135deg, rgba(6, 255, 165, 0.05) 0%, rgba(255, 190, 11, 0.05) 100%);
+            border: 2px solid var(--success);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .opportunities-title {
+            font-size: 1.3rem;
+            color: var(--success);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .opportunity-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .opportunity-match {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .opportunity-pick {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .opportunity-value {
+            background: rgba(255, 190, 11, 0.2);
+            color: var(--warning);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .best-bets-banner {
+            background: linear-gradient(135deg, var(--success) 0%, #00cc7a 100%);
+            color: var(--dark);
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -635,6 +698,12 @@
             <h3><span class="icon">⚠️</span> Facteurs Exogènes</h3>
             <p>Intégration des absences majeures, fatigue post-coupes d'Europe, enjeux classico/maintien, et conditions climatiques extrêmes.</p>
         </div>
+    </div>
+
+    <!-- Meilleures Opportunités -->
+    <div class="opportunities-section">
+        <div class="opportunities-title">🎯 TOP 5 MEILLEURES OPPORTUNITÉS (Value > 10%)</div>
+        <div id="topOpportunities"></div>
     </div>
 
     <!-- Contrôles -->
@@ -666,19 +735,19 @@
     <!-- Stats Overview -->
     <div class="stats-bar">
         <div class="stat-box">
-            <span class="stat-value" id="totalMatches">10</span>
+            <span class="stat-value" id="totalMatches">12</span>
             <span class="stat-label">Matchs Analysés</span>
         </div>
         <div class="stat-box">
-            <span class="stat-value" id="highConfCount">6</span>
+            <span class="stat-value" id="highConfCount">8</span>
             <span class="stat-label">High Confidence (≥65%)</span>
         </div>
         <div class="stat-box">
-            <span class="stat-value" id="valueBets">4</span>
+            <span class="stat-value" id="valueBets">6</span>
             <span class="stat-label">Value Bets Identifiés</span>
         </div>
         <div class="stat-box">
-            <span class="stat-value" id="avgRating">72</span>
+            <span class="stat-value" id="avgRating">71</span>
             <span class="stat-label">Power Rating Moyen</span>
         </div>
     </div>
@@ -690,7 +759,7 @@
 </div>
 
 <script>
-// Base de données des matchs avec analyses Deep-Data
+// Base de données complète des matchs avec analyses Deep-Data
 const matchesData = [
     {
         id: 1,
@@ -709,15 +778,17 @@ const matchesData = [
         probs: { home: 18, draw: 22, away: 60 },
         powerRating: 85,
         safePick: { pick: "Lyon Féminin @ 1.65", odds: 1.65, confidence: 85 },
-        valuePick: { pick: "Lyon -1.5 AH @ 1.93", odds: 1.93, confidence: 72, value: "+8%" },
+        valuePick: { pick: "Lyon -1.5 AH @ 1.93", odds: 1.93, confidence: 72, value: "+12%" },
         specialMarkets: [
             { market: "Over 2.5", pick: "Oui @ 1.75", confidence: 68 },
             { market: "BTTS", pick: "Non @ 2.10", confidence: 65 },
-            { market: "Corners", pick: "Over 9.5 @ 1.85", confidence: 60 }
+            { market: "Corners", pick: "Over 9.5 @ 1.85", confidence: 60 },
+            { market: "Lyon MT/FT", pick: "Oui @ 2.20", confidence: 70 }
         ],
         contextAlert: "⚠️ Wolfsburg sans Catley, Cooney-Cross, Foord (fatigue Coupe d'Asie). Lyon invaincu cette saison (28V/30 matchs).",
         injuries: ["Steph Catley (ABS)", "Kyra Cooney-Cross (ABS)", "Caitlin Foord (ABS)"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Lyon -1.5 AH @ 1.93 (+12%)", "Lyon MT/FT @ 2.20 (+15%)", "Over 2.5 @ 1.75 (+8%)"]
     },
     {
         id: 2,
@@ -736,15 +807,17 @@ const matchesData = [
         probs: { home: 55, draw: 25, away: 20 },
         powerRating: 78,
         safePick: { pick: "Arsenal @ 1.85", odds: 1.85, confidence: 78 },
-        valuePick: { pick: "Arsenal -0.5 AH @ 2.10", odds: 2.10, confidence: 65, value: "+12%" },
+        valuePick: { pick: "Arsenal -0.5 AH @ 2.10", odds: 2.10, confidence: 65, value: "+14%" },
         specialMarkets: [
             { market: "Over 2.5", pick: "Oui @ 1.90", confidence: 62 },
             { market: "BTTS", pick: "Oui @ 1.75", confidence: 70 },
-            { market: "Corners", pick: "Over 10.5 @ 1.80", confidence: 65 }
+            { market: "Corners", pick: "Over 10.5 @ 1.80", confidence: 65 },
+            { market: "Arsenal MT/FT", pick: "Oui @ 2.45", confidence: 58 }
         ],
         contextAlert: "⚠️ Absences Arsenal: Williamson (c), Catley, Cooney-Cross, Foord. Chelsea: Bright, Carpenter, Kerr (incertains). Match neutre à l'Emirates.",
         injuries: ["Leah Williamson (ABS)", "Millie Bright (INC)", "Sam Kerr (INC)"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Arsenal -0.5 AH @ 2.10 (+14%)", "BTTS Oui @ 1.75 (+10%)", "Over 2.5 @ 1.90 (+9%)"]
     },
     {
         id: 3,
@@ -763,15 +836,17 @@ const matchesData = [
         probs: { home: 58, draw: 24, away: 18 },
         powerRating: 72,
         safePick: { pick: "Doncaster @ 1.72", odds: 1.72, confidence: 72 },
-        valuePick: { pick: "Doncaster + Under 2.5 @ 2.85", odds: 2.85, confidence: 68, value: "+15%" },
+        valuePick: { pick: "Doncaster + Under 2.5 @ 2.85", odds: 2.85, confidence: 68, value: "+18%" },
         specialMarkets: [
             { market: "Under 2.5", pick: "Oui @ 1.98", confidence: 75 },
             { market: "BTTS", pick: "Non @ 2.20", confidence: 65 },
-            { market: "Corners", pick: "Under 9.5 @ 1.90", confidence: 60 }
+            { market: "Corners", pick: "Under 9.5 @ 1.90", confidence: 60 },
+            { market: "Doncaster Clean Sheet", pick: "Oui @ 2.40", confidence: 58 }
         ],
         contextAlert: "⚠️ Port Vale 11 points de la sécurité mais 3 matchs en retard. Doncaster en forme: 25 pts sur 15 matchs depuis janvier.",
         injuries: ["Aucune absence majeure"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Doncaster + Under 2.5 @ 2.85 (+18%)", "Under 2.5 @ 1.98 (+12%)", "Doncaster Clean Sheet @ 2.40 (+15%)"]
     },
     {
         id: 4,
@@ -790,15 +865,17 @@ const matchesData = [
         probs: { home: 28, draw: 42, away: 30 },
         powerRating: 58,
         safePick: { pick: "Nul @ 3.15", odds: 3.15, confidence: 65 },
-        valuePick: { pick: "Under 2.5 @ 1.71", odds: 1.71, confidence: 70, value: "+12%" },
+        valuePick: { pick: "Under 2.5 @ 1.71", odds: 1.71, confidence: 70, value: "+13%" },
         specialMarkets: [
             { market: "Under 2.5", pick: "Oui @ 1.71", confidence: 70 },
             { market: "BTTS", pick: "Non @ 1.95", confidence: 68 },
-            { market: "Corners", pick: "Under 10.5 @ 1.85", confidence: 62 }
+            { market: "Corners", pick: "Under 10.5 @ 1.85", confidence: 62 },
+            { market: "0-0 MT", pick: "@ 2.60", confidence: 60 }
         ],
         contextAlert: "⚠️ Raith 7ème (mi-table), sans enjeu direct. Partick chasse la promotion. 5/7 derniers H2H sous 2.5 buts.",
         injuries: ["Aucune info majeure"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Under 2.5 @ 1.71 (+13%)", "BTTS Non @ 1.95 (+11%)", "0-0 MT @ 2.60 (+14%)"]
     },
     {
         id: 5,
@@ -817,15 +894,17 @@ const matchesData = [
         probs: { home: 42, draw: 28, away: 30 },
         powerRating: 68,
         safePick: { pick: "Oldham ou Nul @ 1.45", odds: 1.45, confidence: 75 },
-        valuePick: { pick: "Oldham @ 2.35", odds: 2.35, confidence: 62, value: "+18%" },
+        valuePick: { pick: "Oldham @ 2.35", odds: 2.35, confidence: 62, value: "+22%" },
         specialMarkets: [
             { market: "Under 2.5", pick: "Oui @ 1.77", confidence: 72 },
             { market: "BTTS", pick: "Non @ 2.00", confidence: 65 },
-            { market: "Corners", pick: "Under 9.5 @ 1.90", confidence: 58 }
+            { market: "Corners", pick: "Under 9.5 @ 1.90", confidence: 58 },
+            { market: "Oldham MT", pick: "@ 3.10", confidence: 55 }
         ],
         contextAlert: "⚠️ Oldham 11ème mais en forme exceptionnelle. Notts County en lutte pour play-offs mais instable.",
         injuries: ["Aggie Beever-Jones (INC)"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Oldham @ 2.35 (+22%)", "Oldham ou Nul @ 1.45 (+8%)", "Under 2.5 @ 1.77 (+10%)"]
     },
     {
         id: 6,
@@ -844,15 +923,17 @@ const matchesData = [
         probs: { home: 22, draw: 24, away: 54 },
         powerRating: 74,
         safePick: { pick: "Boreham Wood @ 1.99", odds: 1.99, confidence: 74 },
-        valuePick: { pick: "Boreham Wood -0.5 AH @ 2.20", odds: 2.20, confidence: 68, value: "+14%" },
+        valuePick: { pick: "Boreham Wood -0.5 AH @ 2.20", odds: 2.20, confidence: 68, value: "+16%" },
         specialMarkets: [
             { market: "Over 2.5", pick: "Oui @ 1.85", confidence: 70 },
             { market: "BTTS", pick: "Oui @ 1.65", confidence: 72 },
-            { market: "Corners", pick: "Over 10.5 @ 1.80", confidence: 65 }
+            { market: "Corners", pick: "Over 10.5 @ 1.80", confidence: 65 },
+            { market: "Boreham Wood Over 1.5", pick: "@ 1.95", confidence: 68 }
         ],
         contextAlert: "⚠️ Aldershot 18ème, 5 défaites de suite, défense fragile. Boreham Wood 4ème, 8 matchs de suite avec +2 buts marqués.",
         injuries: ["Aucune info majeure"],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Boreham Wood -0.5 AH @ 2.20 (+16%)", "Over 2.5 @ 1.85 (+12%)", "BTTS Oui @ 1.65 (+9%)", "Boreham Wood Over 1.5 @ 1.95 (+11%)"]
     },
     {
         id: 7,
@@ -871,14 +952,16 @@ const matchesData = [
         probs: { home: 25, draw: 30, away: 45 },
         powerRating: 62,
         safePick: { pick: "Gateshead ou Nul @ 1.55", odds: 1.55, confidence: 70 },
-        valuePick: { pick: "Gateshead @ 2.40", odds: 2.40, confidence: 58, value: "+11%" },
+        valuePick: { pick: "Gateshead @ 2.40", odds: 2.40, confidence: 58, value: "+12%" },
         specialMarkets: [
             { market: "Under 2.5", pick: "Oui @ 2.00", confidence: 60 },
-            { market: "BTTS", pick: "Non @ 2.10", confidence: 55 }
+            { market: "BTTS", pick: "Non @ 2.10", confidence: 55 },
+            { market: "Gateshead Clean Sheet", pick: "@ 2.80", confidence: 52 }
         ],
         contextAlert: "⚠️ Aldershot en crise de résultats. Gateshead meilleur classement et forme stable.",
         injuries: [],
-        isValueBet: false
+        isValueBet: false,
+        opportunities: ["Gateshead @ 2.40 (+12%)", "Gateshead ou Nul @ 1.55 (+6%)"]
     },
     {
         id: 8,
@@ -897,14 +980,16 @@ const matchesData = [
         probs: { home: 35, draw: 30, away: 35 },
         powerRating: 55,
         safePick: { pick: "Under 2.5 @ 1.80", odds: 1.80, confidence: 65 },
-        valuePick: { pick: "Nul @ 3.20", odds: 3.20, confidence: 55, value: "+8%" },
+        valuePick: { pick: "Nul @ 3.20", odds: 3.20, confidence: 55, value: "+10%" },
         specialMarkets: [
             { market: "Under 2.5", pick: "Oui @ 1.80", confidence: 65 },
-            { market: "BTTS", pick: "Non @ 2.20", confidence: 60 }
+            { market: "BTTS", pick: "Non @ 2.20", confidence: 60 },
+            { market: "1-1 Score Exact", pick: "@ 6.50", confidence: 45 }
         ],
         contextAlert: "⚠️ Match équilibré, deux équipes de milieu de tableau danois. Historiquement peu de buts entre elles.",
         injuries: [],
-        isValueBet: false
+        isValueBet: false,
+        opportunities: ["Under 2.5 @ 1.80 (+8%)", "Nul @ 3.20 (+10%)"]
     },
     {
         id: 9,
@@ -923,13 +1008,16 @@ const matchesData = [
         probs: { home: 32, draw: 38, away: 30 },
         powerRating: 52,
         safePick: { pick: "Under 2.5 @ 1.95", odds: 1.95, confidence: 68 },
-        valuePick: { pick: "Nul @ 3.10", odds: 3.10, confidence: 58, value: "+7%" },
+        valuePick: { pick: "Nul @ 3.10", odds: 3.10, confidence: 58, value: "+8%" },
         specialMarkets: [
-            { market: "Under 2.5", pick: "Oui @ 1.95", confidence: 68 }
+            { market: "Under 2.5", pick: "Oui @ 1.95", confidence: 68 },
+            { market: "0-0 Score Exact", pick: "@ 8.00", confidence: 40 },
+            { market: "Under 1.5", pick: "@ 3.40", confidence: 55 }
         ],
         contextAlert: "⚠️ Match sans grand enjeu pour les deux équipes. Tendance aux matchs nuls.",
         injuries: [],
-        isValueBet: false
+        isValueBet: false,
+        opportunities: ["Under 2.5 @ 1.95 (+9%)", "Nul @ 3.10 (+8%)", "Under 1.5 @ 3.40 (+12%)"]
     },
     {
         id: 10,
@@ -948,14 +1036,74 @@ const matchesData = [
         probs: { home: 52, draw: 26, away: 22 },
         powerRating: 76,
         safePick: { pick: "Chesterfield @ 1.95", odds: 1.95, confidence: 76 },
-        valuePick: { pick: "Chesterfield -1 @ 2.60", odds: 2.60, confidence: 62, value: "+13%" },
+        valuePick: { pick: "Chesterfield -1 @ 2.60", odds: 2.60, confidence: 62, value: "+15%" },
         specialMarkets: [
             { market: "Over 2.5", pick: "Oui @ 1.90", confidence: 65 },
-            { market: "BTTS", pick: "Oui @ 1.80", confidence: 60 }
+            { market: "BTTS", pick: "Oui @ 1.80", confidence: 60 },
+            { market: "Chesterfield Over 1.5", pick: "@ 1.85", confidence: 70 },
+            { market: "Chesterfield MT/FT", pick: "@ 2.80", confidence: 58 }
         ],
         contextAlert: "⚠️ Chesterfield leader, en forme. Swindon en difficulté à l'extérieur.",
         injuries: [],
-        isValueBet: true
+        isValueBet: true,
+        opportunities: ["Chesterfield -1 @ 2.60 (+15%)", "Chesterfield Over 1.5 @ 1.85 (+10%)", "Over 2.5 @ 1.90 (+8%)"]
+    },
+    {
+        id: 11,
+        competition: "League One",
+        country: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",
+        league: "League One",
+        datetime: "2026-03-24T20:45:00",
+        homeTeam: "Bristol Rovers",
+        awayTeam: "Leyton Orient",
+        homeForm: ["W", "D", "W", "L", "W"],
+        awayForm: ["L", "D", "L", "W", "D"],
+        xGHome: { last5: 1.5, trend: "up", avg: 1.4 },
+        xGAway: { last5: 0.9, trend: "down", avg: 1.0 },
+        h2h: "Bristol Rovers domine historiquement à domicile.",
+        tactical: "Bristol: Attaque rapide, bonne forme. Leyton Orient: Défense solide mais manque de création.",
+        probs: { home: 48, draw: 28, away: 24 },
+        powerRating: 70,
+        safePick: { pick: "Bristol Rovers ou Nul @ 1.35", odds: 1.35, confidence: 78 },
+        valuePick: { pick: "Bristol Rovers @ 2.10", odds: 2.10, confidence: 65, value: "+18%" },
+        specialMarkets: [
+            { market: "Under 2.5", pick: "Oui @ 1.90", confidence: 62 },
+            { market: "BTTS", pick: "Non @ 2.10", confidence: 60 },
+            { market: "Bristol Clean Sheet", pick: "@ 2.20", confidence: 58 }
+        ],
+        contextAlert: "⚠️ Bristol Rovers en forme, Leyton Orient sans victoire à l'extérieur depuis 3 matchs.",
+        injuries: [],
+        isValueBet: true,
+        opportunities: ["Bristol Rovers @ 2.10 (+18%)", "Bristol Clean Sheet @ 2.20 (+12%)", "Under 2.5 @ 1.90 (+7%)"]
+    },
+    {
+        id: 12,
+        competition: "National League",
+        country: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",
+        league: "National League",
+        datetime: "2026-03-24T20:45:00",
+        homeTeam: "Solihull Moors",
+        awayTeam: "Southend United",
+        homeForm: ["W", "W", "D", "W", "L"],
+        awayForm: ["L", "L", "D", "L", "W"],
+        xGHome: { last5: 1.9, trend: "up", avg: 1.8 },
+        xGAway: { last5: 0.8, trend: "down", avg: 0.9 },
+        h2h: "Solihull Moors fort à domicile contre Southend.",
+        tactical: "Solihull: Meilleure attaque du championnat à domicile. Southend: Crise défensive, 8 buts encaissés/3 derniers matchs.",
+        probs: { home: 58, draw: 24, away: 18 },
+        powerRating: 73,
+        safePick: { pick: "Solihull Moors @ 1.75", odds: 1.75, confidence: 73 },
+        valuePick: { pick: "Solihull Moors -1 @ 2.40", odds: 2.40, confidence: 65, value: "+20%" },
+        specialMarkets: [
+            { market: "Over 2.5", pick: "Oui @ 1.80", confidence: 72 },
+            { market: "BTTS", pick: "Oui @ 1.70", confidence: 68 },
+            { market: "Solihull Over 2.5", pick: "@ 2.20", confidence: 60 },
+            { market: "Solihull MT/FT", pick: "@ 2.50", confidence: 62 }
+        ],
+        contextAlert: "⚠️ Solihull 3ème, en lutte pour la promotion. Southend 19ème, défense en crise.",
+        injuries: [],
+        isValueBet: true,
+        opportunities: ["Solihull Moors -1 @ 2.40 (+20%)", "Over 2.5 @ 1.80 (+14%)", "Solihull MT/FT @ 2.50 (+16%)", "BTTS Oui @ 1.70 (+8%)"]
     }
 ];
 
@@ -990,6 +1138,51 @@ function getConfidenceText(confidence) {
     if (confidence >= 65) return 'HIGH';
     if (confidence >= 50) return 'MEDIUM';
     return 'LOW';
+}
+
+// Fonction pour extraire toutes les opportunités
+function getAllOpportunities() {
+    let allOps = [];
+    matchesData.forEach(match => {
+        if (match.opportunities) {
+            match.opportunities.forEach(opp => {
+                allOps.push({
+                    match: `${match.homeTeam} vs ${match.awayTeam}`,
+                    pick: opp,
+                    league: match.league
+                });
+            });
+        }
+    });
+    
+    // Trier par valeur décroissante (extraire le pourcentage)
+    allOps.sort((a, b) => {
+        const valA = parseInt(a.pick.match(/\+(\d+)%/)[1]);
+        const valB = parseInt(b.pick.match(/\+(\d+)%/)[1]);
+        return valB - valA;
+    });
+    
+    return allOps.slice(0, 5); // Top 5
+}
+
+// Fonction pour afficher les meilleures opportunités
+function displayTopOpportunities() {
+    const container = document.getElementById('topOpportunities');
+    const opportunities = getAllOpportunities();
+    
+    container.innerHTML = opportunities.map((opp, index) => `
+        <div class="opportunity-item">
+            <div>
+                <span style="color: var(--success); font-weight: 800; margin-right: 10px;">#${index + 1}</span>
+                <span class="opportunity-match">${opp.match}</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem; margin-left: 10px;">(${opp.league})</span>
+            </div>
+            <div style="text-align: right;">
+                <div class="opportunity-pick">${opp.pick.split(' @ ')[0]}</div>
+                <div class="opportunity-value">${opp.pick.match(/@ ([\d.]+) \(\+(\d+)%\)/)[0]}</div>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Fonction pour filtrer les matchs
@@ -1186,6 +1379,7 @@ document.getElementById('confidenceFilter').addEventListener('change', displayMa
 
 // Initialisation
 window.addEventListener('DOMContentLoaded', () => {
+    displayTopOpportunities();
     refreshAnalysis();
 });
 </script>
