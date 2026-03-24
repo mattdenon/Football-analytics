@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>Deep-Data Football</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050505;
+            color: #e2e8f0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .match-card {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .match-card:hover {
+            transform: translateY(-2px);
+            border-left: 3px solid #6366f1;
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .power-bar {
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+            height: 4px;
+            border-radius: 2px;
+        }
+        .value-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            font-weight: bold;
+        }
+        .safe-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .live-indicator {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .grid-cols-custom {
+            grid-template-columns: 80px 1fr 100px 120px 200px 150px 120px 120px;
+        }
+        @media (max-width: 1280px) {
+            .responsive-hide { display: none; }
+        }
+        /* Optimisations mobile */
+        @media (max-width: 768px) {
+            .mobile-stack { display: block; }
+            .mobile-hide { display: none; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 overflow-x-hidden">
+
+    <header class="sticky top-0 z-50 glass-panel border-b border-indigo-500/20">
+        <div class="max-w-[1920px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">Deep-Data <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Analytics</span></h1>
+                    <p class="text-xs text-slate-400 mono flex items-center gap-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full live-indicator"></span>
+                        SCAN 24H • <span id="matchCount">0</span> MATCHS
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-[1920px] mx-auto px-4 py-4 space-y-4">
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="glass-panel p-3 rounded-lg border-l-4 border-indigo-500">
+                <div class="text-xs text-slate-400 uppercase">Total Matchs</div>
+                <div class="text-2xl font-bold text-white" id="totalMatches">0</div>
+            </div>
+            <div class="glass-panel p-3 rounded-lg border-l-4 border-emerald-500">
+                <div class="text-xs text-slate-400 uppercase">Value Bets</div>
+                <div class="text-2xl font-bold text-emerald-400" id="valueCount">0</div>
+            </div>
+            <div class="glass-panel p-3 rounded-lg border-l-4 border-amber-500">
+                <div class="text-xs text-slate-400 uppercase">High Conf</div>
+                <div class="text-2xl font-bold text-amber-400" id="highConfCount">0</div>
+            </div>
+            <div class="glass-panel p-3 rounded-lg border-l-4 border-purple-500">
+                <div class="text-xs text-slate-400 uppercase">Small Markets</div>
+                <div class="text-2xl font-bold text-purple-400" id="smallMarketsCount">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-3 items-center">
+            <input type="text" id="searchInput" placeholder="Rechercher équipe..." 
+                class="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-full md:w-48">
+            
+            <select id="leagueFilter" class="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+                <option value="all">Toutes Compétitions</option>
+            </select>
+
+            <button onclick="toggleValueOnly()" id="valueBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm font-medium transition">
+                Value Bets Only
+            </button>
+            
+            <button onclick="exportCSV()" class="ml-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition">
+                Export CSV
+            </button>
+        </div>
+
+        <!-- Matches -->
+        <div id="matchesContainer" class="space-y-2 pb-8"></div>
+        
+        <div class="text-center py-4">
+            <button onclick="loadMore()" id="loadMoreBtn" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm font-medium transition">
+                Charger plus...
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden overflow-y-auto">
+        <div class="min-h-screen px-4 py-8 flex items-center justify-center">
+            <div class="glass-panel w-full max-w-4xl rounded-2xl p-6 border border-indigo-500/30 relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition">✕</button>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const allMatches = [
+            {id: 1, league: "Liga 2 🇪🇸", time: "03:30", home: "Castellon", away: "Cultural Leonesa", power: 72, xGH: "📈 1.8", xGA: "📉 0.9", h2h: "Castellon domicile fort 4V-1N", context: "Rotation Leonesa", prob: {h:58, d:24, a:18}, safe: "1X @1.25", value: "1 @1.85", edge: 8.2, tactique: "Possession vs Défensif passif", absences: "Leonesa: 2 defs", formH: ["W","W","D","W","L"], formA: ["L","D","L","W","L"]},
+            {id: 2, league: "Liga 2 🇪🇸", time: "03:30", home: "Almeria", away: "Cordoba", power: 68, xGH: "📈 1.6", xGA: "📉 1.1", h2h: "Almeria invaincu 5 derns", context: "Cordoba crise défensive", prob: {h:55, d:25, a:20}, safe: "1 @1.65", value: "1 -1 @2.10", edge: 7.5, tactique: "Pressing haut vs Build-up lent", absences: "Cordoba: Gardien", formH: ["W","D","W","W","L"], formA: ["L","L","D","L","W"]},
+            {id: 3, league: "Superliga 🇷🇴", time: "02:30", home: "Unirea Slobozia", away: "Otelul Galati", power: 65, xGH: "📉 1.1", xGA: "📈 1.4", h2h: "Otelul invaincu vs Slobozia", context: "Play-down relégation", prob: {h:28, d:32, a:40}, safe: "X2 @1.65", value: "2 @2.45", edge: 6.5, tactique: "Contre vs Pressing", absences: "Slobozia: GK suspendu", formH: ["L","D","L","W","L"], formA: ["W","D","W","L","D"]},
+            {id: 4, league: "Liga Prof 🇦🇷", time: "01:00", home: "Estudiantes", away: "Central Cordoba", power: 78, xGH: "📈 2.1", xGA: "📉 0.8", h2h: "Estudiantes 5V domicile", context: "Lutte titre", prob: {h:68, d:22, a:10}, safe: "1 @1.55", value: "1 -1 @2.15", edge: 12.3, tactique: "4-4-2 intense vs 5-3-2 passif", absences: "Central: 4 blessés", formH: ["W","W","W","D","W"], formA: ["L","L","D","L","W"]},
+            {id: 5, league: "Eliteserien 🇳🇴", time: "19:00", home: "Aalesund", away: "Viking FK", power: 69, xGH: "📈 1.6", xGA: "📈 1.7", h2h: "Viking dominateur historique", context: "J3 Saison, promu vs favori", prob: {h:22, d:28, a:50}, safe: "X2 @1.35", value: "2 @2.10", edge: 5.8, tactique: "4-2-3-1 vs 3-5-2 offensif", absences: "Aalesund: Ailier droit", formH: ["D","L","W","D","L"], formA: ["W","W","D","W","L"]},
+            {id: 6, league: "Liga Postobon 🇨🇴", time: "05:10", home: "Santa Fe", away: "Ind. Medellin", power: 71, xGH: "📈 1.5", xGA: "📉 1.0", h2h: "Santa Fe imbattable Bogota", context: "Altitude 2600m", prob: {h:55, d:28, a:17}, safe: "1X @1.30", value: "1 @2.05", edge: 7.2, tactique: "Pressing vs Possession lente", absences: "Medellin: MD suspendu", formH: ["W","D","W","W","D"], formA: ["L","L","W","D","L"]},
+            {id: 7, league: "Serie C 🇮🇹", time: "20:30", home: "Salernitana", away: "Team Altamura", power: 74, xGH: "📈 1.9", xGA: "📉 0.9", h2h: "1ère confrontation", context: "Descente Série B", prob: {h:62, d:24, a:14}, safe: "1 @1.60", value: "1 -1 @2.25", edge: 9.1, tactique: "Qualité technique supérieure", absences: "Altamura: Capitaine", formH: ["W","D","W","L","W"], formA: ["L","L","D","L","D"]},
+            {id: 8, league: "FNL 🇷🇺", time: "14:00", home: "FC Chelyabinsk", away: "Torpedo Moscow", power: 66, xGH: "📈 1.4", xGA: "📉 1.2", h2h: "Torpedo crise", context: "Ex-RPL en difficulté", prob: {h:38, d:30, a:32}, safe: "1X @1.75", value: "1 @2.80", edge: 15.4, tactique: "Contre rapide vs Possession stérile", absences: "Torpedo: 2 attaquants", formH: ["W","W","D","D","W"], formA: ["L","L","D","W","L"]},
+            {id: 9, league: "Primera Div 🇵🇾", time: "01:30", home: "Sportivo Trinidense", away: "Recoleta", power: 63, xGH: "📉 1.0", xGA: "📈 1.3", h2h: "Recoleta invaincu", context: "Trinidense lanterne", prob: {h:25, d:30, a:45}, safe: "X2 @1.55", value: "2 @2.35", edge: 6.8, tactique: "Désorganisé vs 4-4-2 solide", absences: "Trinidense: Coach menacé", formH: ["L","L","D","L","L"], formA: ["W","D","W","D","W"]},
+            {id: 10, league: "NPFL 🇳🇬", time: "16:00", home: "Abia Warriors", away: "Niger Tornadoes", power: 58, xGH: "📈 1.3", xGA: "📉 0.7", h2h: "Warriors domicile", context: "Chaleur extrême 35°C", prob: {h:52, d:28, a:20}, safe: "1X @1.35", value: "Under 2.5 @2.10", edge: 8.5, tactique: "Physique vs Défensif", absences: "Tornadoes: Fatigue voyage", formH: ["W","W","D","W","L"], formA: ["L","L","D","L","D"]},
+            {id: 11, league: "Primera Div 🇵🇾", time: "23:30", home: "Rubio Nu", away: "Sportivo Ameliano", power: 61, xGH: "📉 1.0", xGA: "📈 1.2", h2h: "Ameliano favori récent", context: "Rubio sans victoire 5 matchs", prob: {h:30, d:30, a:40}, safe: "X2 @1.55", value: "Nul @3.40", edge: 11.2, tactique: "Désespoir offensif vs Contre", absences: "Rubio: 3 suspendus", formH: ["L","D","L","D","L"], formA: ["D","W","D","W","L"]},
+            {id: 12, league: "J1 League 🇯🇵", time: "11:00", home: "Kawasaki", away: "Yokohama F.M.", power: 72, xGH: "📈 1.9", xGA: "📈 1.6", h2h: "Kawasaki dominateur", context: "J1 2026 saison", prob: {h:52, d:26, a:22}, safe: "1 @1.85", value: "Over 2.5 @1.90", edge: 6.5, tactique: "Attaques rapides des deux côtés", absences: "Yokohama: Défenseur", formH: ["W","W","D","W","L"], formA: ["W","L","W","D","W"]},
+            {id: 13, league: "K League 1 🇰🇷", time: "11:30", home: "Ulsan", away: "Jeonbuk", power: 70, xGH: "📈 1.7", xGA: "📈 1.5", h2h: "Ulsan champion en titre", context: "Choc coréen", prob: {h:45, d:28, a:27}, safe: "1X @1.50", value: "1 @2.10", edge: 7.8, tactique: "Pressing coréen intense", absences: "Jeonbuk: Milieu", formH: ["W","D","W","W","W"], formA: ["L","W","D","W","L"]},
+            {id: 14, league: "Chinese SL 🇨🇳", time: "12:35", home: "Shanghai Port", away: "Beijing Guoan", power: 68, xGH: "📈 1.8", xGA: "📉 1.2", h2h: "Port supérieur récent", context: "SL Chine", prob: {h:52, d:26, a:22}, safe: "1 @1.75", value: "1 -1 @2.25", edge: 8.1, tactique: "Stars étrangères vs Organisation", absences: "Beijing: Étranger blessé", formH: ["W","W","D","L","W"], formA: ["L","W","D","L","D"]},
+            {id: 15, league: "Ekstraklasa 🇵🇱", time: "18:00", home: "Lech Poznan", away: "Legia Varsovie", power: 71, xGH: "📈 1.7", xGA: "📈 1.4", h2h: "Match équilibré", context: "Top Pologne", prob: {h:42, d:30, a:28}, safe: "1X @1.45", value: "Over 2.5 @1.95", edge: 7.5, tactique: "Deux attaques de qualité", absences: "Legia: Défenseur", formH: ["W","D","W","L","W"], formA: ["W","W","D","L","D"]},
+            {id: 16, league: "Super League 🇨🇭", time: "20:30", home: "Young Boys", away: "Basel", power: 73, xGH: "📈 1.8", xGA: "📉 1.1", h2h: "YB fort domicile", context: "YB lutte titre", prob: {h:58, d:26, a:16}, safe: "1 @1.60", value: "1 -1 @2.10", edge: 8.9, tactique: "Pressing suisse vs Technique", absences: "Basel: Milieu offensif", formH: ["W","W","D","W","W"], formA: ["L","D","W","L","L"]},
+            {id: 17, league: "Primera Div 🇨🇱", time: "23:00", home: "Colo-Colo", away: "OHiggins", power: 74, xGH: "📈 1.9", xGA: "📉 1.0", h2h: "Colo-Colo dominateur", context: "Lutte titre", prob: {h:62, d:24, a:14}, safe: "1 @1.50", value: "1 -1 @2.05", edge: 8.8, tactique: "Attaque large vs Défense centrée", absences: "OHiggins: 3 blessés", formH: ["W","W","W","D","W"], formA: ["L","L","D","W","L"]},
+            {id: 18, league: "Liga 1 🇵🇪", time: "21:00", home: "Alianza Lima", away: "Sporting Cristal", power: 67, xGH: "📈 1.6", xGA: "📈 1.4", h2h: "Rivalité équilibrée", context: "Clásico majeur", prob: {h:42, d:30, a:28}, safe: "1X @1.45", value: "Nul @3.40", edge: 11.5, tactique: "Deux équipes offensives", absences: "Cristal: Milieu", formH: ["W","D","W","L","W"], formA: ["W","D","L","W","D"]},
+            {id: 19, league: "Serie B 🇧🇷", time: "02:30", home: "Goias", away: "CRB", power: 70, xGH: "📈 1.7", xGA: "📉 0.9", h2h: "Goias récent descent Série A", context: "Favorite pour remontée", prob: {h:58, d:25, a:17}, safe: "1 @1.60", value: "1/1 @2.80", edge: 9.2, tactique: "4-2-3-1 offensif vs 4-4-2 compact", absences: "CRB: Attaquant", formH: ["W","D","W","W","L"], formA: ["L","L","D","L","W"]},
+            {id: 20, league: "A-League 🇦🇺", time: "09:00", home: "Melbourne City", away: "Sydney FC", power: 69, xGH: "📈 1.7", xGA: "📈 1.6", h2h: "City récent supérieur", context: "A-League fin saison", prob: {h:45, d:28, a:27}, safe: "1X @1.50", value: "Over 2.5 @1.75", edge: 6.8, tactique: "Jeu australien ouvert", absences: "Sydney: GK blessé", formH: ["W","D","W","W","L"], formA: ["L","W","D","W","W"]}
+        ];
+
+        let currentPage = 0;
+        const matchesPerPage = 10;
+        let filteredMatches = [...allMatches];
+        let valueOnly = false;
+
+        function init() {
+            updateStats();
+            populateLeagues();
+            renderMatches();
+        }
+
+        function updateStats() {
+            document.getElementById('totalMatches').textContent = allMatches.length;
+            document.getElementById('matchCount').textContent = allMatches.length;
+            document.getElementById('valueCount').textContent = allMatches.filter(m => m.edge > 8).length;
+            document.getElementById('highConfCount').textContent = allMatches.filter(m => m.power >= 70).length;
+            document.getElementById('smallMarketsCount').textContent = allMatches.filter(m => 
+                m.league.includes('🇷🇴') || m.league.includes('🇵🇾') || m.league.includes('🇨🇴') || 
+                m.league.includes('🇳🇴') || m.league.includes('🇷🇺') || m.league.includes('🇳🇬') || 
+                m.league.includes('🇪🇬') || m.league.includes('🇹🇳') || m.league.includes('🇲🇦')
+            ).length;
+        }
+
+        function populateLeagues() {
+            const leagues = [...new Set(allMatches.map(m => m.league))].sort();
+            const select = document.getElementById('leagueFilter');
+            leagues.forEach(l => {
+                const option = document.createElement('option');
+                option.value = l;
+                option.textContent = l;
+                select.appendChild(option);
+            });
+        }
+
+        function filterMatches() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const league = document.getElementById('leagueFilter').value;
+
+            filteredMatches = allMatches.filter(m => {
+                const matchSearch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search);
+                const matchLeague = league === 'all' || m.league === league;
+                const matchValue = valueOnly ? m.edge > 5 : true;
+                return matchSearch && matchLeague && matchValue;
+            });
+
+            currentPage = 0;
+            document.getElementById('matchesContainer').innerHTML = '';
+            renderMatches();
+        }
+
+        function toggleValueOnly() {
+            valueOnly = !valueOnly;
+            const btn = document.getElementById('valueBtn');
+            if (valueOnly) {
+                btn.classList.add('bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-slate-800');
+            } else {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-slate-800');
+            }
+            filterMatches();
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('matchesContainer');
+            const start = currentPage * matchesPerPage;
+            const end = start + matchesPerPage;
+            const toShow = filteredMatches.slice(start, end);
+
+            toShow.forEach(match => {
+                const div = document.createElement('div');
+                div.className = 'match-card glass-panel rounded-lg p-4 cursor-pointer';
+                div.onclick = () => showDetails(match);
+                
+                const powerColor = match.power >= 75 ? 'text-emerald-400' : match.power >= 65 ? 'text-indigo-400' : 'text-slate-400';
+                
+                div.innerHTML = `
+                    <div class="flex flex-col md:grid md:grid-cols-8 gap-4 items-center">
+                        <div class="flex justify-between w-full md:block">
+                            <span class="text-xs font-mono text-slate-400">${match.time}</span>
+                            <span class="text-xs text-indigo-400 md:hidden">${match.league}</span>
+                        </div>
+                        <div class="w-full md:col-span-2">
+                            <div class="font-bold text-white">${match.home}</div>
+                            <div class="font-bold text-slate-400">${match.away}</div>
+                            <div class="text-xs text-indigo-400 hidden md:block">${match.league}</div>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:justify-center">
+                            <span class="text-lg font-bold ${powerColor}">${match.power}</span>
+                            <div class="w-16 bg-slate-800 rounded-full h-1.5">
+                                <div class="power-bar h-1.5 rounded-full" style="width: ${match.power}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs mono w-full md:text-center">
+                            <div class="text-emerald-400">${match.xGH}</div>
+                            <div class="text-red-400">${match.xGA}</div>
+                        </div>
+                        <div class="hidden md:block text-xs text-slate-300 text-center">
+                            1:${match.prob.h}% X:${match.prob.d}% 2:${match.prob.a}%
+                        </div>
+                        <div class="w-full md:text-center">
+                            <span class="safe-badge px-3 py-1 rounded text-xs">${match.safe}</span>
+                        </div>
+                        <div class="w-full md:text-center">
+                            <span class="value-badge px-3 py-1 rounded text-xs flex items-center justify-center gap-1">
+                                ${match.value} <span class="text-[10px]">+${match.edge}%</span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('loadMoreBtn').style.display = end >= filteredMatches.length ? 'none' : 'block';
+        }
+
+        function loadMore() {
+            currentPage++;
+            renderMatches();
+        }
+
+        function showDetails(match) {
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold text-white mb-4">${match.home} vs ${match.away}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-900/50 p-4 rounded-xl">
+                        <h4 class="text-emerald-400 text-xs uppercase mb-2">Forme Domicile</h4>
+                        <div class="flex gap-1 mb-2">
+                            ${match.formH.map(r => `<span class="w-8 h-8 flex items-center justify-center rounded ${r === 'W' ? 'bg-emerald-500/20 text-emerald-400' : r === 'D' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'} text-xs font-bold">${r}</span>`).join('')}
+                        </div>
+                        <div class="text-sm text-slate-300">${match.xGH} xG/match</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl">
+                        <h4 class="text-red-400 text-xs uppercase mb-2">Forme Extérieur</h4>
+                        <div class="flex gap-1 mb-2">
+                            ${match.formA.map(r => `<span class="w-8 h-8 flex items-center justify-center rounded ${r === 'W' ? 'bg-emerald-500/20 text-emerald-400' : r === 'D' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'} text-xs font-bold">${r}</span>`).join('')}
+                        </div>
+                        <div class="text-sm text-slate-300">${match.xGA} xG/match</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl">
+                        <h4 class="text-indigo-400 text-xs uppercase mb-2">Probabilités</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm"><span>Home</span><span class="text-emerald-400 font-bold">${match.prob.h}%</span></div>
+                            <div class="flex justify-between text-sm"><span>Nul</span><span class="text-amber-400 font-bold">${match.prob.d}%</span></div>
+                            <div class="flex justify-between text-sm"><span>Away</span><span class="text-indigo-400 font-bold">${match.prob.a}%</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3 mb-6">
+                    <div class="bg-indigo-900/30 p-4 rounded-xl border-l-4 border-indigo-500">
+                        <h4 class="font-bold text-white mb-1">⚽ Tactique</h4>
+                        <p class="text-sm text-slate-300">${match.tactique}</p>
+                        <p class="text-xs text-slate-400 mt-1">${match.h2h}</p>
+                    </div>
+                    <div class="bg-amber-900/30 p-4 rounded-xl border-l-4 border-amber-500">
+                        <h4 class="font-bold text-white mb-1">⚠️ Contexte</h4>
+                        <p class="text-sm text-slate-300">${match.context}</p>
+                        <p class="text-sm text-red-400 mt-1">${match.absences}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="safe-badge p-4 rounded-xl text-center">
+                        <div class="text-xs uppercase font-bold mb-1">Safe Pick</div>
+                        <div class="text-lg font-bold text-white">${match.safe}</div>
+                    </div>
+                    <div class="value-badge p-4 rounded-xl text-center">
+                        <div class="text-xs uppercase font-bold mb-1">Value Pick</div>
+                        <div class="text-lg font-bold">${match.value}</div>
+                        <div class="text-xs mt-1">Edge: +${match.edge}%</div>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function exportCSV() {
+            let csv = 'Competition,Heure,Match,Power,Safe Pick,Value Pick,Edge\\n';
+            filteredMatches.forEach(m => {
+                csv += `${m.league},${m.time},${m.home} vs ${m.away},${m.power},${m.safe},${m.value},${m.edge}\\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'analyse_football.csv');
+            a.click();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterMatches);
+        document.getElementById('leagueFilter').addEventListener('change', filterMatches);
+        
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        init();
+    </script>
+</body>
+</html>
